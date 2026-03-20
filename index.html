@@ -1,652 +1,716 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  CheckCircle2, 
-  CircleDashed, 
-  Clock, 
-  Calendar, 
-  AlertCircle,
-  AlertTriangle,
-  Flag, 
-  ChevronDown, 
-  ChevronUp,
-  BookOpen,
-  Target,
-  FileText,
-  CheckSquare,
-  Check,
-  Trash2,
-  Plus
-} from 'lucide-react';
-
-const phases = [
-  {
-    id: 'p1', type: 'phase',
-    title: "Phase 1: Einleitung (Kap. 1) - 5%",
-    weeks: "~1 Woche (6 Tage)",
-    startDate: "2026-03-11",
-    endDate: "2026-03-16",
-    tasks: "Kapitel 1: Problemstellung, Relevanz, Zielsetzung und Aufbau der Arbeit verschriftlichen.",
-    milestone: "Kapitel 1 (Einleitung) ist fertig.",
-    milestoneDate: "2026-03-16",
-    milestoneName: "MEILENSTEIN 1"
-  },
-  {
-    id: 'p2', type: 'phase',
-    title: "Phase 2: Theorie & Branchenbezug – Teil 1 (Kap. 2.1)",
-    weeks: "~3 Wochen (21 Tage)",
-    startDate: "2026-03-17",
-    endDate: "2026-04-06",
-    tasks: "Kapitel 2 (insg. 20%): Abfallmanagement in der stahlverarbeitenden Industrie. Rechtliche Rahmenbedingungen (KrWG, ISO 14001), Spezifika der Edelstahlverarbeitung und Herausforderungen herausarbeiten.",
-    milestone: "Branchenspezifischer Rahmen steht vor dem Urlaub.",
-    milestoneDate: "2026-04-06",
-    milestoneName: "ZWISCHENZIEL"
-  },
-  {
-    id: 'v1', type: 'vacation',
-    title: "🌴 Urlaub 1",
-    weeks: "17 Tage",
-    startDate: "2026-04-07",
-    endDate: "2026-04-23",
-    tasks: "Erholung pur! Laptop bleibt zu. Zeit, die Batterien aufzuladen."
-  },
-  {
-    id: 'p3', type: 'phase',
-    title: "Phase 3: Theorie & Branchenbezug – Teil 2 (Kap. 2.2)",
-    weeks: "~1 Woche (5 Tage)",
-    startDate: "2026-04-24",
-    endDate: "2026-04-28",
-    tasks: "Kapitel 2.2: Strategische Entscheidungsinstrumente schreiben. Grundlagen der multikriteriellen Entscheidungsanalyse (MCDA) und Portfolio-Techniken (Wert-Risiko-Ansätze).",
-    milestone: "Kompletter Theorieteil (Kapitel 2) abgeschlossen.",
-    milestoneDate: "2026-04-28",
-    milestoneName: "MEILENSTEIN 2"
-  },
-  {
-    id: 'p4', type: 'phase',
-    title: "Phase 4: Ist-Analyse Butting GmbH – Teil 1 (Kap. 3.1-3.2)",
-    weeks: "~3 Wochen (22 Tage)",
-    startDate: "2026-04-29",
-    endDate: "2026-05-20",
-    tasks: "Kapitel 3 (insg. 20%): Vorstellung der H. Butting GmbH & Co. KG und quantitative Analyse der Abfallbilanz (Scoping). Datensammlung im Unternehmen.",
-    milestone: "Datenbasis gesichert vor dem Kurzurlaub.",
-    milestoneDate: "2026-05-20",
-    milestoneName: "ZWISCHENZIEL"
-  },
-  {
-    id: 'v2', type: 'vacation',
-    title: "🌴 Urlaub 2",
-    weeks: "6 Tage",
-    startDate: "2026-05-21",
-    endDate: "2026-05-26",
-    tasks: "Kurze Auszeit zum Durchatmen."
-  },
-  {
-    id: 'p5', type: 'phase',
-    title: "Phase 5: Ist-Analyse Butting GmbH – Teil 2 (Kap. 3.3-3.4)",
-    weeks: "3 Tage",
-    startDate: "2026-05-27",
-    endDate: "2026-05-29",
-    tasks: "Kapitel 3.3 & 3.4: Branchenvergleich, Benchmarking und finale Ableitung des Handlungsbedarfs für das neue Bewertungsmodell.",
-    milestone: "Ist-Analyse (Kapitel 3) komplett abgeschlossen.",
-    milestoneDate: "2026-05-29",
-    milestoneName: "MEILENSTEIN 3"
-  },
-  {
-    id: 'p6', type: 'phase',
-    title: "Phase 6: Bewertungsmodell aufbauen (Kap. 4.1-4.4)",
-    weeks: "~4,5 Wochen (32 Tage)",
-    startDate: "2026-05-30",
-    endDate: "2026-06-30",
-    tasks: "Kapitel 4 (insg. 35%): Kern der Arbeit! Definition der Dimensionen (Ökonomie vs. Risiko), Operationalisierung der Kriterien, Entwicklung des Scoring-Modells und der Wert-Risiko-Matrix.",
-    milestone: "Das theoretische Modell steht.",
-    milestoneDate: "2026-06-30",
-    milestoneName: "ZWISCHENZIEL"
-  },
-  {
-    id: 'p7', type: 'phase',
-    title: "Phase 7: Modell-Anwendung & PoC (Kap. 4.5-4.6)",
-    weeks: "~2 Wochen (16 Tage)",
-    startDate: "2026-07-01",
-    endDate: "2026-07-16",
-    tasks: "Kapitel 4.5 - 4.6: Anwendung des Modells auf die Abfallfraktionen der H. Butting GmbH und Proof of Concept (Exemplarische Maßnahmenplanung).",
-    milestone: "Hauptteil (Kapitel 4) ist vor dem Urlaub fertig geschrieben.",
-    milestoneDate: "2026-07-16",
-    milestoneName: "MEILENSTEIN 4"
-  },
-  {
-    id: 'v3', type: 'vacation',
-    title: "🌴 Urlaub 3",
-    weeks: "10 Tage",
-    startDate: "2026-07-17",
-    endDate: "2026-07-26",
-    tasks: "Letzter Energie-Boost vor der heißen Phase der Arbeit."
-  },
-  {
-    id: 'p8', type: 'phase',
-    title: "Phase 8: Validierung & Fazit (Kap. 5 & 6) - 20%",
-    weeks: "~3 Wochen (22 Tage)",
-    startDate: "2026-07-27",
-    endDate: "2026-08-17",
-    tasks: "Kapitel 5 (10%) & Kapitel 6 (10%): Konzeption/Auswertung der Validierung (Fokusgruppe/Experten), Implikationen, Zusammenfassung, Kritische Würdigung und Ausblick verfassen.",
-    milestone: "Die komplette Rohfassung der Arbeit steht.",
-    milestoneDate: "2026-08-17",
-    milestoneName: "MEILENSTEIN 5"
-  },
-  {
-    id: 'p9', type: 'phase',
-    title: "Phase 9: Puffer, Feinschliff & Abgabe",
-    weeks: "~1,5 Wochen (11 Tage)",
-    startDate: "2026-08-18",
-    endDate: "2026-08-28",
-    tasks: "Fest eingeplanter Puffer! Korrekturlesen, Formatierung prüfen, Verzeichnisse aktualisieren, Plagiatsprüfung, Drucken und Binden lassen.",
-    milestone: "Finale Abgabe der Masterarbeit.",
-    milestoneDate: "2026-08-28",
-    milestoneName: "STICHTAG"
-  }
-];
-
-// Helper functions for dates
-const parseDate = (dateString) => new Date(dateString);
-const formatDate = (dateString) => {
-  const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-  return parseDate(dateString).toLocaleDateString('de-DE', options);
-};
-const getDaysBetween = (start, end) => {
-  const diffTime = Math.abs(end - start);
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-};
-
-export default function App() {
-  // We use the actual current date as default
-  const actualToday = new Date();
-  
-  // State for the simulated date (so the user can play around)
-  const [currentDate, setCurrentDate] = useState(actualToday);
-  const [expandedPhases, setExpandedPhases] = useState(['p1']); // Default expand Phase 1
-  
-  // Thesis Topic
-  const [thesisTopic, setThesisTopic] = useState('Strategische Abfallsteuerung in der stahlverarbeitenden Industrie: Konzeption eines multikriteriellen Entscheidungsmodells zur Priorisierung von Abfallvermeidungspotenzialen am Fallbeispiel der H. Butting GmbH & Co. KG.');
-  
-  // Checklist States
-  const [checklists, setChecklists] = useState({});
-  const [newTaskInput, setNewTaskInput] = useState({});
-  
-  // Neu: State für manuell abgeschlossene Phasen
-  const [completedPhases, setCompletedPhases] = useState([]);
-
-  const togglePhaseCompletion = (phaseId) => {
-    setCompletedPhases(prev => 
-      prev.includes(phaseId) ? prev.filter(id => id !== phaseId) : [...prev, phaseId]
-    );
-  };
-
-  const addTask = (phaseId) => {
-    const text = newTaskInput[phaseId];
-    if (!text || !text.trim()) return;
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masterarbeit Zeitstrahl 2026</title>
     
-    const newTask = { id: Date.now().toString(), text: text.trim(), completed: false };
-    setChecklists(prev => ({
-      ...prev,
-      [phaseId]: [...(prev[phaseId] || []), newTask]
-    }));
-    setNewTaskInput(prev => ({ ...prev, [phaseId]: '' }));
-  };
-
-  const toggleTask = (phaseId, taskId) => {
-    setChecklists(prev => ({
-      ...prev,
-      [phaseId]: prev[phaseId].map(task =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      )
-    }));
-  };
-
-  const deleteTask = (phaseId, taskId) => {
-    setChecklists(prev => ({
-      ...prev,
-      [phaseId]: prev[phaseId].filter(task => task.id !== taskId)
-    }));
-  };
-
-  const globalStartDate = parseDate(phases[0].startDate);
-  const globalEndDate = parseDate(phases[phases.length - 1].endDate);
-
-  // Calculate overall progress including vacation subtraction
-  const progressData = useMemo(() => {
-    const startBoundary = new Date(globalStartDate);
-    startBoundary.setHours(0, 0, 0, 0);
-    const endBoundary = new Date(globalEndDate);
-    endBoundary.setHours(23, 59, 59, 999);
+    <!-- Tailwind CSS (für das Styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    const curr = new Date(currentDate);
-    curr.setHours(0, 0, 0, 0); // Zählt den aktuellen Tag als verbleibenden Tag
-
-    // Hilfsfunktion für präzise Tagesdifferenzen
-    const getDays = (start, end) => Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
-
-    const totalGrossDays = getDays(startBoundary, endBoundary);
+    <!-- React & ReactDOM (für die Logik) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    let totalVacationDays = 0;
-    let passedVacationDays = 0;
-
-    // Alle Urlaube durchlaufen und die Tage abziehen
-    phases.filter(p => p.type === 'vacation').forEach(vacation => {
-      const vStart = parseDate(vacation.startDate); vStart.setHours(0, 0, 0, 0);
-      const vEnd = parseDate(vacation.endDate); vEnd.setHours(23, 59, 59, 999);
-
-      totalVacationDays += getDays(vStart, vEnd);
-
-      // Überschneidung mit bereits vergangenen Tagen berechnen
-      const overlapStart = new Date(Math.max(startBoundary.getTime(), vStart.getTime()));
-      const overlapEnd = new Date(Math.min(curr.getTime(), vEnd.getTime()));
-      
-      if (overlapStart < overlapEnd) {
-        passedVacationDays += getDays(overlapStart, overlapEnd);
-      }
-    });
-
-    const totalNetDays = totalGrossDays - totalVacationDays;
-
-    if (curr < startBoundary) {
-      return { percent: 0, daysLeftGross: totalGrossDays, daysLeftNet: totalNetDays, status: 'not_started' };
-    }
+    <!-- Babel (übersetzt den React/JSX Code direkt im Browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
     
-    if (curr > endBoundary) {
-      return { percent: 100, daysLeftGross: 0, daysLeftNet: 0, status: 'finished' };
-    }
+    <div id="root"></div>
 
-    const passedGrossDays = getDays(startBoundary, curr);
-    const remainingGrossDays = totalGrossDays - passedGrossDays;
-    
-    const passedNetDays = passedGrossDays - passedVacationDays;
-    const remainingNetDays = totalNetDays - passedNetDays;
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
 
-    // Fortschrittsbalken basiert nun auf den reinen Netto-Arbeitstagen
-    const percent = Math.min(100, Math.max(0, (passedNetDays / totalNetDays) * 100));
+        // --- Icons ---
+        const Icon = ({ children, className }) => (
+            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {children}
+            </svg>
+        );
+        const CheckCircle2 = ({ className }) => <Icon className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></Icon>;
+        const CircleDashed = ({ className }) => <Icon className={className}><path d="M10.1 2.18a9.93 9.93 0 0 1 3.8 0"/><path d="M17.6 4.26a9.95 9.95 0 0 1 2.14 3.04"/><path d="M21.82 10.1a9.93 9.93 0 0 1 0 3.8"/><path d="M19.74 17.6a9.95 9.95 0 0 1-3.04 2.14"/><path d="M13.9 21.82a9.94 9.94 0 0 1-3.8 0"/><path d="M6.4 19.74a9.95 9.95 0 0 1-2.14-3.04"/><path d="M2.18 13.9a9.93 9.93 0 0 1 0-3.8"/><path d="M4.26 6.4A9.95 9.95 0 0 1 7.3 4.26"/></Icon>;
+        const Clock = ({ className }) => <Icon className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>;
+        const Calendar = ({ className }) => <Icon className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></Icon>;
+        const Flag = ({ className }) => <Icon className={className}><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></Icon>;
+        const ChevronDown = ({ className }) => <Icon className={className}><path d="m6 9 6 6 6-6"/></Icon>;
+        const ChevronUp = ({ className }) => <Icon className={className}><path d="m18 15-6-6-6 6"/></Icon>;
+        const BookOpen = ({ className }) => <Icon className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+        const Target = ({ className }) => <Icon className={className}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+        const FileText = ({ className }) => <Icon className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
+        const CheckSquare = ({ className }) => <Icon className={className}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></Icon>;
+        const Check = ({ className }) => <Icon className={className}><polyline points="20 6 9 17 4 12"/></Icon>;
+        const Trash2 = ({ className }) => <Icon className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></Icon>;
+        const Plus = ({ className }) => <Icon className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Icon>;
+        const AlertCircle = ({ className }) => <Icon className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></Icon>;
+        const AlertTriangle = ({ className }) => <Icon className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Icon>;
+        const Download = ({ className }) => <Icon className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
+        const Upload = ({ className }) => <Icon className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></Icon>;
 
-    return { 
-      percent, 
-      daysLeftGross: remainingGrossDays, 
-      daysLeftNet: remainingNetDays, 
-      status: 'in_progress' 
-    };
-  }, [currentDate, globalStartDate, globalEndDate]);
+        // --- Daten ---
+        const phases = [
+          {
+            id: 'p1', type: 'phase',
+            title: "Phase 1: Einleitung (Kap. 1) - 5%",
+            weeks: "~1 Woche (6 Tage)",
+            startDate: "2026-03-11",
+            endDate: "2026-03-16",
+            tasks: "Kapitel 1: Problemstellung, Relevanz, Zielsetzung und Aufbau der Arbeit verschriftlichen.",
+            milestone: "Kapitel 1 (Einleitung) ist fertig.",
+            milestoneDate: "2026-03-16",
+            milestoneName: "MEILENSTEIN 1"
+          },
+          {
+            id: 'p2', type: 'phase',
+            title: "Phase 2: Theorie & Branchenbezug – Teil 1 (Kap. 2.1)",
+            weeks: "~3 Wochen (21 Tage)",
+            startDate: "2026-03-17",
+            endDate: "2026-04-06",
+            tasks: "Kapitel 2 (insg. 20%): Abfallmanagement in der stahlverarbeitenden Industrie. Rechtliche Rahmenbedingungen (KrWG, ISO 14001), Spezifika der Edelstahlverarbeitung und Herausforderungen herausarbeiten.",
+            milestone: "Branchenspezifischer Rahmen steht vor dem Urlaub.",
+            milestoneDate: "2026-04-06",
+            milestoneName: "ZWISCHENZIEL"
+          },
+          {
+            id: 'v1', type: 'vacation',
+            title: "🌴 Urlaub 1",
+            weeks: "17 Tage",
+            startDate: "2026-04-07",
+            endDate: "2026-04-23",
+            tasks: "Erholung pur! Laptop bleibt zu. Zeit, die Batterien aufzuladen."
+          },
+          {
+            id: 'p3', type: 'phase',
+            title: "Phase 3: Theorie & Branchenbezug – Teil 2 (Kap. 2.2)",
+            weeks: "~1 Woche (5 Tage)",
+            startDate: "2026-04-24",
+            endDate: "2026-04-28",
+            tasks: "Kapitel 2.2: Strategische Entscheidungsinstrumente schreiben. Grundlagen der multikriteriellen Entscheidungsanalyse (MCDA) und Portfolio-Techniken (Wert-Risiko-Ansätze).",
+            milestone: "Kompletter Theorieteil (Kapitel 2) abgeschlossen.",
+            milestoneDate: "2026-04-28",
+            milestoneName: "MEILENSTEIN 2"
+          },
+          {
+            id: 'p4', type: 'phase',
+            title: "Phase 4: Ist-Analyse Butting GmbH – Teil 1 (Kap. 3.1-3.2)",
+            weeks: "~3 Wochen (22 Tage)",
+            startDate: "2026-04-29",
+            endDate: "2026-05-20",
+            tasks: "Kapitel 3 (insg. 20%): Vorstellung der H. Butting GmbH & Co. KG und quantitative Analyse der Abfallbilanz (Scoping). Datensammlung im Unternehmen.",
+            milestone: "Datenbasis gesichert vor dem Kurzurlaub.",
+            milestoneDate: "2026-05-20",
+            milestoneName: "ZWISCHENZIEL"
+          },
+          {
+            id: 'v2', type: 'vacation',
+            title: "🌴 Urlaub 2",
+            weeks: "6 Tage",
+            startDate: "2026-05-21",
+            endDate: "2026-05-26",
+            tasks: "Kurze Auszeit zum Durchatmen."
+          },
+          {
+            id: 'p5', type: 'phase',
+            title: "Phase 5: Ist-Analyse Butting GmbH – Teil 2 (Kap. 3.3-3.4)",
+            weeks: "3 Tage",
+            startDate: "2026-05-27",
+            endDate: "2026-05-29",
+            tasks: "Kapitel 3.3 & 3.4: Branchenvergleich, Benchmarking und finale Ableitung des Handlungsbedarfs für das neue Bewertungsmodell.",
+            milestone: "Ist-Analyse (Kapitel 3) komplett abgeschlossen.",
+            milestoneDate: "2026-05-29",
+            milestoneName: "MEILENSTEIN 3"
+          },
+          {
+            id: 'p6', type: 'phase',
+            title: "Phase 6: Bewertungsmodell aufbauen (Kap. 4.1-4.4)",
+            weeks: "~4,5 Wochen (32 Tage)",
+            startDate: "2026-05-30",
+            endDate: "2026-06-30",
+            tasks: "Kapitel 4 (insg. 35%): Kern der Arbeit! Definition der Dimensionen (Ökonomie vs. Risiko), Operationalisierung der Kriterien, Entwicklung des Scoring-Modells und der Wert-Risiko-Matrix.",
+            milestone: "Das theoretische Modell steht.",
+            milestoneDate: "2026-06-30",
+            milestoneName: "ZWISCHENZIEL"
+          },
+          {
+            id: 'p7', type: 'phase',
+            title: "Phase 7: Modell-Anwendung & PoC (Kap. 4.5-4.6)",
+            weeks: "~2 Wochen (16 Tage)",
+            startDate: "2026-07-01",
+            endDate: "2026-07-16",
+            tasks: "Kapitel 4.5 - 4.6: Anwendung des Modells auf die Abfallfraktionen der H. Butting GmbH und Proof of Concept (Exemplarische Maßnahmenplanung).",
+            milestone: "Hauptteil (Kapitel 4) ist vor dem Urlaub fertig geschrieben.",
+            milestoneDate: "2026-07-16",
+            milestoneName: "MEILENSTEIN 4"
+          },
+          {
+            id: 'v3', type: 'vacation',
+            title: "🌴 Urlaub 3",
+            weeks: "10 Tage",
+            startDate: "2026-07-17",
+            endDate: "2026-07-26",
+            tasks: "Letzter Energie-Boost vor der heißen Phase der Arbeit."
+          },
+          {
+            id: 'p8', type: 'phase',
+            title: "Phase 8: Validierung & Fazit (Kap. 5 & 6) - 20%",
+            weeks: "~3 Wochen (22 Tage)",
+            startDate: "2026-07-27",
+            endDate: "2026-08-17",
+            tasks: "Kapitel 5 (10%) & Kapitel 6 (10%): Konzeption/Auswertung der Validierung (Fokusgruppe/Experten), Implikationen, Zusammenfassung, Kritische Würdigung und Ausblick verfassen.",
+            milestone: "Die komplette Rohfassung der Arbeit steht.",
+            milestoneDate: "2026-08-17",
+            milestoneName: "MEILENSTEIN 5"
+          },
+          {
+            id: 'p9', type: 'phase',
+            title: "Phase 9: Puffer, Feinschliff & Abgabe",
+            weeks: "~1,5 Wochen (11 Tage)",
+            startDate: "2026-08-18",
+            endDate: "2026-08-28",
+            tasks: "Fest eingeplanter Puffer! Korrekturlesen, Formatierung prüfen, Verzeichnisse aktualisieren, Plagiatsprüfung, Drucken und Binden lassen.",
+            milestone: "Finale Abgabe der Masterarbeit.",
+            milestoneDate: "2026-08-28",
+            milestoneName: "STICHTAG"
+          }
+        ];
 
-  // Determine the status of each phase
-  const getPhaseStatus = (phase) => {
-    if (completedPhases.includes(phase.id)) return 'completed_manual';
+        const parseDate = (dateString) => new Date(dateString);
+        const formatDate = (dateString) => {
+          const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+          return parseDate(dateString).toLocaleDateString('de-DE', options);
+        };
+        const getDaysBetween = (start, end) => {
+          const diffTime = Math.abs(end - start);
+          return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        };
 
-    const start = parseDate(phase.startDate);
-    const end = parseDate(phase.endDate);
-    
-    // Normalize times to midnight for fair comparison
-    const curr = new Date(currentDate);
-    curr.setHours(0, 0, 0, 0);
-    const phaseStart = new Date(start);
-    phaseStart.setHours(0, 0, 0, 0);
-    const phaseEnd = new Date(end);
-    phaseEnd.setHours(23, 59, 59, 999);
-
-    if (curr > phaseEnd) return 'overdue'; // Vorbei, aber nicht als erledigt markiert!
-    if (curr >= phaseStart && curr <= phaseEnd) return 'current';
-    return 'upcoming';
-  };
-
-  // Auto-expand the current phase when date changes
-  useEffect(() => {
-    const currentPhase = phases.find(p => getPhaseStatus(p) === 'current' || getPhaseStatus(p) === 'overdue');
-    if (currentPhase && !expandedPhases.includes(currentPhase.id)) {
-      setExpandedPhases(prev => [...prev, currentPhase.id]);
-    }
-  }, [currentDate]);
-
-  const togglePhase = (id) => {
-    setExpandedPhases(prev => 
-      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
-    );
-  };
-
-  const handleDateChange = (e) => {
-    setCurrentDate(new Date(e.target.value));
-  };
-
-  const resetToToday = () => {
-    setCurrentDate(actualToday);
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8 font-sans">
-      <div className="max-w-4xl mx-auto space-y-6">
-        
-        {/* Header & Dashboard */}
-        <header className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-                <BookOpen className="text-indigo-600 h-8 w-8" />
-                Masterarbeit 2026
-              </h1>
-              <p className="text-slate-500 mt-2 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                {formatDate(phases[0].startDate)} – {formatDate(phases[phases.length - 1].endDate)}
-              </p>
-
-              <div className="mt-6 max-w-xl">
-                <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                  <Target className="h-4 w-4 text-indigo-500" />
-                  Mein Thema / Arbeitstitel
-                </label>
-                <textarea 
-                  rows="3"
-                  placeholder="Z.B. Entwicklung eines Bewertungsmodells für das Abfallmanagement in der Stahlindustrie..."
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-shadow resize-none leading-relaxed"
-                  value={thesisTopic}
-                  onChange={(e) => setThesisTopic(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            {/* Simulation Controller */}
-            <div className="bg-slate-100 p-4 rounded-xl border border-slate-200 min-w-[250px] shrink-0">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
-                Datum simulieren
-              </label>
-              <div className="flex flex-col gap-2">
-                <input 
-                  type="date" 
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  value={currentDate.toISOString().split('T')[0]}
-                  onChange={handleDateChange}
-                  min="2026-03-01"
-                  max="2026-09-30"
-                />
-                <button 
-                  onClick={resetToToday}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium text-left flex items-center gap-1"
-                >
-                  <Clock className="h-3 w-3" /> Zurück zu heute ({actualToday.toLocaleDateString('de-DE')})
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Overall Progress Bar */}
-          <div className="mt-8">
-            <div className="flex justify-between items-end mb-2">
-              <span className="font-semibold text-slate-700">Gesamtfortschritt (Netto-Arbeitszeit)</span>
-              <div className="text-right flex items-center justify-end gap-3">
-                <span className="text-2xl font-bold text-indigo-600">{Math.round(progressData.percent)}%</span>
-                
-                {progressData.status === 'in_progress' && (
-                  <div className="text-right flex flex-col items-end">
-                    <span className="text-sm text-slate-500 font-medium">
-                      {progressData.daysLeftGross} Tage (~{(progressData.daysLeftGross / 30).toFixed(1).replace('.', ',')} Monate) bis Abgabe
-                    </span>
-                    <span className="text-xs font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border border-indigo-100 mt-0.5">
-                      {progressData.daysLeftNet} reine Arbeitstage (~{(progressData.daysLeftNet / 30).toFixed(1).replace('.', ',')} Monate) verbleibend
-                    </span>
-                  </div>
-                )}
-                
-                {progressData.status === 'finished' && (
-                  <span className="text-sm text-emerald-600 ml-2 font-medium">(Abgeschlossen!)</span>
-                )}
-                
-                {progressData.status === 'not_started' && (
-                  <div className="text-right flex flex-col items-end ml-2">
-                    <span className="text-sm text-slate-500">
-                      {progressData.daysLeftGross} Tage (~{(progressData.daysLeftGross / 30).toFixed(1).replace('.', ',')} Monate) bis Abgabe
-                    </span>
-                    <span className="text-xs font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border border-indigo-100 mt-0.5">
-                      {progressData.daysLeftNet} reine Arbeitstage (~{(progressData.daysLeftNet / 30).toFixed(1).replace('.', ',')} Monate) gesamt
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-              <div 
-                className="h-full bg-indigo-500 transition-all duration-500 ease-out"
-                style={{ width: `${progressData.percent}%` }}
-              />
-            </div>
-          </div>
-        </header>
-
-        {/* Timeline */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <Target className="text-indigo-600 h-5 w-5" />
-            Dein Zeitplan im Detail
-          </h2>
+        // --- Haupt-Applikation ---
+        function App() {
+          const actualToday = new Date();
+          const [currentDate, setCurrentDate] = useState(actualToday);
+          const [expandedPhases, setExpandedPhases] = useState(['p1']);
           
-          <div className="relative border-l-2 border-slate-100 ml-4 md:ml-6 space-y-8 pb-4">
-            {phases.map((phase, index) => {
-              const status = getPhaseStatus(phase);
-              const isExpanded = expandedPhases.includes(phase.id);
+          const defaultTopic = 'Strategische Abfallsteuerung in der stahlverarbeitenden Industrie: Konzeption eines multikriteriellen Entscheidungsmodells zur Priorisierung von Abfallvermeidungspotenzialen am Fallbeispiel der H. Butting GmbH & Co. KG.';
+          
+          // Lade initial aus localStorage
+          const [thesisTopic, setThesisTopic] = useState(() => {
+            try {
+              const saved = localStorage.getItem('masterarbeit_thesisTopic');
+              return saved !== null ? saved : defaultTopic;
+            } catch (e) {
+              return defaultTopic;
+            }
+          });
+          
+          const [checklists, setChecklists] = useState(() => {
+            try {
+              const saved = localStorage.getItem('masterarbeit_checklists');
+              return saved ? JSON.parse(saved) : {};
+            } catch (e) {
+              return {};
+            }
+          });
+
+          // State für manuell abgeschlossene Phasen
+          const [completedPhases, setCompletedPhases] = useState(() => {
+            try {
+              const saved = localStorage.getItem('masterarbeit_completedPhases');
+              return saved ? JSON.parse(saved) : [];
+            } catch (e) {
+              return [];
+            }
+          });
+          
+          const [newTaskInput, setNewTaskInput] = useState({});
+          const fileInputRef = useRef(null);
+
+          // Speichere Änderungen automatisch im localStorage
+          useEffect(() => { localStorage.setItem('masterarbeit_thesisTopic', thesisTopic); }, [thesisTopic]);
+          useEffect(() => { localStorage.setItem('masterarbeit_checklists', JSON.stringify(checklists)); }, [checklists]);
+          useEffect(() => { localStorage.setItem('masterarbeit_completedPhases', JSON.stringify(completedPhases)); }, [completedPhases]);
+
+          const togglePhaseCompletion = (phaseId) => {
+            setCompletedPhases(prev => 
+              prev.includes(phaseId) ? prev.filter(id => id !== phaseId) : [...prev, phaseId]
+            );
+          };
+
+          const addTask = (phaseId) => {
+            const text = newTaskInput[phaseId];
+            if (!text || !text.trim()) return;
+            const newTask = { id: Date.now().toString(), text: text.trim(), completed: false };
+            setChecklists(prev => ({ ...prev, [phaseId]: [...(prev[phaseId] || []), newTask] }));
+            setNewTaskInput(prev => ({ ...prev, [phaseId]: '' }));
+          };
+
+          const toggleTask = (phaseId, taskId) => {
+            setChecklists(prev => ({
+              ...prev,
+              [phaseId]: prev[phaseId].map(task => task.id === taskId ? { ...task, completed: !task.completed } : task)
+            }));
+          };
+
+          const deleteTask = (phaseId, taskId) => {
+            setChecklists(prev => ({ ...prev, [phaseId]: prev[phaseId].filter(task => task.id !== taskId) }));
+          };
+
+          const globalStartDate = parseDate(phases[0].startDate);
+          const globalEndDate = parseDate(phases[phases.length - 1].endDate);
+
+          const progressData = useMemo(() => {
+            const startBoundary = new Date(globalStartDate);
+            startBoundary.setHours(0, 0, 0, 0);
+            const endBoundary = new Date(globalEndDate);
+            endBoundary.setHours(23, 59, 59, 999);
+            
+            const curr = new Date(currentDate);
+            curr.setHours(0, 0, 0, 0); 
+
+            const getDays = (start, end) => Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+            const totalGrossDays = getDays(startBoundary, endBoundary);
+            
+            let totalVacationDays = 0;
+            let passedVacationDays = 0;
+
+            phases.filter(p => p.type === 'vacation').forEach(vacation => {
+              const vStart = parseDate(vacation.startDate); vStart.setHours(0, 0, 0, 0);
+              const vEnd = parseDate(vacation.endDate); vEnd.setHours(23, 59, 59, 999);
+              totalVacationDays += getDays(vStart, vEnd);
+
+              const overlapStart = new Date(Math.max(startBoundary.getTime(), vStart.getTime()));
+              const overlapEnd = new Date(Math.min(curr.getTime(), vEnd.getTime()));
               
-              // Status Styling
-              let dotColor = "bg-slate-200 border-slate-300";
-              let cardStyle = "border-slate-200 bg-white opacity-70";
-              let headerTextColor = "text-slate-600";
-              let icon = <CircleDashed className="h-5 w-5 text-slate-400 bg-white" />;
-              let currentBadgeColor = "bg-indigo-100 text-indigo-700";
-
-              if (phase.type === 'vacation') {
-                dotColor = "bg-amber-200 border-amber-300";
-                cardStyle = "border-amber-200 bg-amber-50/60";
-                headerTextColor = "text-amber-800";
-                icon = <span className="text-lg bg-amber-50 rounded-full h-6 w-6 flex items-center justify-center border border-amber-200 shadow-sm leading-none">🌴</span>;
-                currentBadgeColor = "bg-amber-200 text-amber-800";
-                
-                if (status === 'overdue' || status === 'completed_manual') {
-                  dotColor = "bg-slate-200 border-slate-300";
-                  cardStyle = "border-slate-200 bg-slate-50/40 opacity-60";
-                  headerTextColor = "text-slate-500";
-                  icon = <CheckCircle2 className="h-5 w-5 text-slate-400 bg-slate-50 rounded-full" />;
-                } else if (status === 'current') {
-                  dotColor = "bg-amber-500 border-amber-500 ring-4 ring-amber-100";
-                  cardStyle = "border-amber-300 bg-amber-100 shadow-md transform scale-[1.01] transition-transform";
-                  headerTextColor = "text-amber-900 font-bold";
-                  icon = (
-                    <div className="relative flex h-6 w-6">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-6 w-6 bg-amber-500 border-2 border-white"></span>
-                    </div>
-                  );
-                }
-              } else {
-                if (status === 'completed_manual') {
-                  dotColor = "bg-emerald-500 border-emerald-500";
-                  cardStyle = "border-emerald-200 bg-emerald-50/30";
-                  headerTextColor = "text-emerald-800";
-                  icon = <CheckCircle2 className="h-6 w-6 text-emerald-500 bg-white rounded-full" />;
-                } else if (status === 'overdue') {
-                  dotColor = "bg-red-500 border-red-500";
-                  cardStyle = "border-red-300 bg-red-50 shadow-sm";
-                  headerTextColor = "text-red-800";
-                  currentBadgeColor = "bg-red-100 text-red-700";
-                  icon = <AlertCircle className="h-6 w-6 text-red-500 bg-white rounded-full" />;
-                } else if (status === 'current') {
-                  dotColor = "bg-indigo-600 border-indigo-600 ring-4 ring-indigo-100";
-                  cardStyle = "border-indigo-300 bg-indigo-50 shadow-md transform scale-[1.01] transition-transform";
-                  headerTextColor = "text-indigo-900 font-bold";
-                  icon = (
-                    <div className="relative flex h-6 w-6">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-6 w-6 bg-indigo-600 border-2 border-white"></span>
-                    </div>
-                  );
-                }
+              if (overlapStart < overlapEnd) {
+                passedVacationDays += getDays(overlapStart, overlapEnd);
               }
+            });
 
-              return (
-                <div key={phase.id} className="relative pl-8 md:pl-10">
-                  {/* Timeline Dot/Icon */}
-                  <div className={`absolute -left-[13px] top-4 flex items-center justify-center`}>
-                    {icon}
+            const totalNetDays = totalGrossDays - totalVacationDays;
+
+            if (curr < startBoundary) return { percent: 0, daysLeftGross: totalGrossDays, daysLeftNet: totalNetDays, status: 'not_started' };
+            if (curr > endBoundary) return { percent: 100, daysLeftGross: 0, daysLeftNet: 0, status: 'finished' };
+
+            const passedGrossDays = getDays(startBoundary, curr);
+            const passedNetDays = passedGrossDays - passedVacationDays;
+            
+            return { 
+              percent: Math.min(100, Math.max(0, (passedNetDays / totalNetDays) * 100)), 
+              daysLeftGross: totalGrossDays - passedGrossDays, 
+              daysLeftNet: totalNetDays - passedNetDays, 
+              status: 'in_progress' 
+            };
+          }, [currentDate, globalStartDate, globalEndDate]);
+
+          const getPhaseStatus = (phase) => {
+            if (completedPhases.includes(phase.id)) return 'completed_manual';
+            const start = parseDate(phase.startDate);
+            const end = parseDate(phase.endDate);
+            const curr = new Date(currentDate);
+            curr.setHours(0, 0, 0, 0);
+            const phaseStart = new Date(start);
+            phaseStart.setHours(0, 0, 0, 0);
+            const phaseEnd = new Date(end);
+            phaseEnd.setHours(23, 59, 59, 999);
+
+            if (curr > phaseEnd) return 'overdue';
+            if (curr >= phaseStart && curr <= phaseEnd) return 'current';
+            return 'upcoming';
+          };
+
+          // Genereller Status-Block für das Dashboard
+          const scheduleStatus = useMemo(() => {
+            let hasOverdue = false;
+            let isAhead = false;
+            for (const phase of phases) {
+              if (phase.type === 'vacation') continue;
+              const status = getPhaseStatus(phase);
+              if (status === 'overdue') hasOverdue = true;
+              if (status === 'completed_manual') {
+                const end = parseDate(phase.endDate);
+                end.setHours(23, 59, 59, 999);
+                if (new Date(currentDate) <= end) isAhead = true;
+              }
+            }
+
+            if (hasOverdue) {
+              return { label: 'Hinter dem Zeitplan', desc: 'Mindestens eine Phase ist überfällig.', colors: 'bg-red-50 border-red-200 text-red-700', icon: <AlertTriangle className="h-5 w-5 text-red-500" /> };
+            }
+            if (isAhead) {
+              return { label: 'Dem Zeitplan voraus!', desc: 'Du hast aktuelle Aufgaben vorzeitig beendet.', colors: 'bg-emerald-50 border-emerald-200 text-emerald-700', icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" /> };
+            }
+            return { label: 'Perfekt im Zeitplan', desc: 'Alle bisherigen Deadlines wurden eingehalten.', colors: 'bg-indigo-50 border-indigo-200 text-indigo-700', icon: <Clock className="h-5 w-5 text-indigo-500" /> };
+          }, [currentDate, completedPhases]);
+
+          useEffect(() => {
+            const currentPhase = phases.find(p => getPhaseStatus(p) === 'current' || getPhaseStatus(p) === 'overdue');
+            if (currentPhase && !expandedPhases.includes(currentPhase.id)) {
+              setExpandedPhases(prev => [...prev, currentPhase.id]);
+            }
+          }, [currentDate]);
+
+          const togglePhase = (id) => setExpandedPhases(prev => prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]);
+          const handleDateChange = (e) => setCurrentDate(new Date(e.target.value));
+          const resetToToday = () => setCurrentDate(actualToday);
+
+          const handleExport = async () => {
+            const dataToSave = { checklists, thesisTopic, completedPhases };
+            const dataStr = JSON.stringify(dataToSave, null, 2); 
+
+            try {
+              if ('showSaveFilePicker' in window) {
+                const handle = await window.showSaveFilePicker({
+                  suggestedName: 'masterarbeit_backup.json',
+                  types: [{ description: 'JSON Datei', accept: { 'application/json': ['.json'] } }],
+                });
+                const writable = await handle.createWritable();
+                await writable.write(dataStr);
+                await writable.close();
+                alert("Backup erfolgreich im gewählten Ordner gespeichert!");
+              } else {
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", url);
+                downloadAnchorNode.setAttribute("download", "masterarbeit_backup.json");
+                document.body.appendChild(downloadAnchorNode); 
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+                URL.revokeObjectURL(url);
+                alert("Backup wurde heruntergeladen!");
+              }
+            } catch (err) {
+              if (err.name !== 'AbortError') alert("Es gab ein Problem beim Speichern des Backups.");
+            }
+          };
+
+          const handleImportClick = () => fileInputRef.current.click();
+          const handleFileChange = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              try {
+                const importedData = JSON.parse(e.target.result);
+                if (importedData.checklists) setChecklists(importedData.checklists);
+                if (importedData.thesisTopic) setThesisTopic(importedData.thesisTopic);
+                if (importedData.completedPhases) setCompletedPhases(importedData.completedPhases);
+                alert("Backup erfolgreich geladen!");
+              } catch (error) {
+                alert("Fehler beim Laden der Datei.");
+              }
+              event.target.value = null;
+            };
+            reader.readAsText(file);
+          };
+
+          return (
+            <div className="min-h-screen p-4 md:p-8">
+              <div className="max-w-4xl mx-auto space-y-6">
+                
+                {/* Header & Dashboard */}
+                <header className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                    <div className="flex-1">
+                      <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+                        <BookOpen className="text-indigo-600 h-8 w-8" />
+                        Masterarbeit 2026
+                      </h1>
+                      <p className="text-slate-500 mt-2 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(phases[0].startDate)} – {formatDate(phases[phases.length - 1].endDate)}
+                      </p>
+
+                      <div className="mt-6 max-w-xl">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                          <Target className="h-4 w-4 text-indigo-500" />
+                          Mein Thema / Arbeitstitel
+                        </label>
+                        <div className="w-full bg-indigo-50/50 border border-indigo-100 rounded-lg px-4 py-3 text-sm text-indigo-900 font-medium leading-relaxed">
+                          {thesisTopic}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Simulation Controller & Status */}
+                    <div className="flex flex-col gap-4 min-w-[250px] shrink-0">
+                      <div className={`p-4 rounded-xl border flex items-start gap-3 ${scheduleStatus.colors}`}>
+                        <div className="mt-0.5">{scheduleStatus.icon}</div>
+                        <div>
+                          <h3 className="font-bold text-sm">{scheduleStatus.label}</h3>
+                          <p className="text-xs opacity-90 mt-1">{scheduleStatus.desc}</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
+                          Datum simulieren
+                        </label>
+                        <div className="flex flex-col gap-2">
+                          <input 
+                            type="date" 
+                            className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            value={currentDate.toISOString().split('T')[0]}
+                            onChange={handleDateChange}
+                            min="2026-03-01"
+                            max="2026-09-30"
+                          />
+                          <button 
+                            onClick={resetToToday}
+                            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium text-left flex items-center gap-1"
+                          >
+                            <Clock className="h-3 w-3" /> Zurück zu heute ({actualToday.toLocaleDateString('de-DE')})
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Phase Card */}
-                  <div 
-                    className={`rounded-xl border p-5 transition-all duration-200 ${cardStyle}`}
-                  >
-                    {/* Card Header (Clickable) */}
-                    <div 
-                      className="cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-2"
-                      onClick={() => togglePhase(phase.id)}
-                    >
-                      <div>
-                        <div className="flex items-center gap-3 mb-1">
-                          <span className={`text-lg font-semibold ${headerTextColor}`}>
-                            {phase.title}
-                          </span>
-                          {status === 'current' && <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-indigo-100 text-indigo-700`}>Aktuell</span>}
-                          {status === 'overdue' && <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-red-100 text-red-700 flex items-center gap-1`}><AlertTriangle className="h-3 w-3"/> Überfällig</span>}
-                          {status === 'completed_manual' && <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700`}>Erledigt</span>}
-                        </div>
-                        <div className="text-sm text-slate-500 flex items-center gap-2">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {formatDate(phase.startDate)} – {formatDate(phase.endDate)} 
-                          <span className="mx-1">•</span>
-                          {phase.weeks}
-                        </div>
-                      </div>
-                      
-                      <button className="text-slate-400 hover:text-slate-600 self-start md:self-center p-1">
-                        {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                      </button>
-                    </div>
-
-                    {/* Tasks - Nur bei Klick/Expanded anzeigen */}
-                    {isExpanded && (
-                      <div className="mt-5 pt-5 border-t border-slate-200/60 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div>
-                          <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 ${phase.type === 'vacation' ? 'text-amber-700' : 'text-slate-400'}`}>
-                            <FileText className="h-3.5 w-3.5" /> {phase.type === 'vacation' ? 'Urlaubsplan' : 'Aufgaben in dieser Phase'}
-                          </h4>
-                          <p className={`text-sm p-3 rounded-lg border leading-relaxed ${phase.type === 'vacation' ? 'bg-amber-50/50 border-amber-100 text-amber-900' : 'bg-white/50 border-slate-100 text-slate-700'}`}>
-                            {phase.tasks}
-                          </p>
-                        </div>
-
-                        {/* Checklist Section */}
-                        <div className={`mt-6 p-4 rounded-xl border ${phase.type === 'vacation' ? 'bg-amber-50/30 border-amber-100/60' : 'bg-slate-50 border-slate-200'}`}>
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <CheckSquare className={`h-4 w-4 ${phase.type === 'vacation' ? 'text-amber-600' : 'text-indigo-600'}`} />
-                              <h4 className={`text-sm font-bold ${phase.type === 'vacation' ? 'text-amber-900' : 'text-slate-800'}`}>To-Do Liste</h4>
-                            </div>
-                            
-                            {/* Neu: Phase manuell abschließen Button */}
-                            {phase.type !== 'vacation' && (
-                              <button 
-                                onClick={() => togglePhaseCompletion(phase.id)}
-                                className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 ${
-                                  status === 'completed_manual' 
-                                    ? 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200' 
-                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                                }`}
-                              >
-                                {status === 'completed_manual' ? 'Abschluss rückgängig' : <><CheckCircle2 className="h-3.5 w-3.5" /> Phase abschließen</>}
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Task List */}
-                          <div className="space-y-2 mb-3">
-                            {(checklists[phase.id] || []).map(task => (
-                              <div key={task.id} className="flex items-start gap-2 group">
-                                <button
-                                  onClick={() => toggleTask(phase.id, task.id)}
-                                  className={`mt-0.5 shrink-0 h-4 w-4 rounded border flex items-center justify-center transition-colors ${
-                                    task.completed 
-                                      ? (phase.type === 'vacation' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-emerald-500 border-emerald-500 text-white') 
-                                      : 'bg-white border-slate-300'
-                                  }`}
-                                >
-                                  {task.completed && <Check className="h-3 w-3" />}
-                                </button>
-                                <span className={`text-sm flex-1 ${task.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
-                                  {task.text}
-                                </span>
-                                <button
-                                  onClick={() => deleteTask(phase.id, task.id)}
-                                  className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            ))}
-                            {(!checklists[phase.id] || checklists[phase.id].length === 0) && (
-                              <p className="text-xs text-slate-400 italic">Noch keine To-Dos für diese Phase hinterlegt.</p>
-                            )}
-                          </div>
-
-                          {/* Add Task Input */}
-                          <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200/60">
-                            <input
-                              type="text"
-                              placeholder="Neues To-Do..."
-                              className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                              value={newTaskInput[phase.id] || ''}
-                              onChange={(e) => setNewTaskInput(prev => ({ ...prev, [phase.id]: e.target.value }))}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') addTask(phase.id);
-                              }}
-                            />
-                            <button
-                              onClick={() => addTask(phase.id)}
-                              className={`p-1.5 rounded-md transition-colors border ${
-                                phase.type === 'vacation' 
-                                  ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100' 
-                                  : 'bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100'
-                              }`}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Milestone - Immer anzeigen, auch wenn eingeklappt */}
-                    {phase.milestone && (
-                      <div className={`mt-4 p-4 rounded-lg flex gap-3 items-start border ${
-                        status === 'completed_manual' ? 'bg-emerald-100/50 border-emerald-200 text-emerald-800' :
-                        status === 'overdue' ? 'bg-white border-red-200 text-red-900 shadow-sm' :
-                        status === 'current' ? 'bg-white border-indigo-200 text-indigo-900 shadow-sm' :
-                        'bg-slate-50 border-slate-200 text-slate-600'
-                      }`}>
-                        <Flag className={`h-5 w-5 mt-0.5 shrink-0 ${
-                          status === 'completed_manual' ? 'text-emerald-600' :
-                          status === 'overdue' ? 'text-red-500' :
-                          status === 'current' ? 'text-indigo-600' :
-                          'text-slate-400'
-                        }`} />
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-sm">{phase.milestoneName}</span>
-                            <span className="text-xs px-2 py-0.5 rounded bg-white/60 border border-slate-200 font-medium">
-                              {formatDate(phase.milestoneDate)}
+                  {/* Overall Progress Bar */}
+                  <div className="mt-8">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="font-semibold text-slate-700">Gesamtfortschritt (Netto-Arbeitszeit)</span>
+                      <div className="text-right flex items-center justify-end gap-3">
+                        <span className="text-2xl font-bold text-indigo-600">{Math.round(progressData.percent)}%</span>
+                        {progressData.status === 'in_progress' && (
+                          <div className="text-right flex flex-col items-end">
+                            <span className="text-sm text-slate-500 font-medium">
+                              {progressData.daysLeftGross} Tage (~{(progressData.daysLeftGross / 30).toFixed(1).replace('.', ',')} Monate) bis Abgabe
+                            </span>
+                            <span className="text-xs font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border border-indigo-100 mt-0.5">
+                              {progressData.daysLeftNet} reine Arbeitstage verbleibend
                             </span>
                           </div>
-                          <p className="text-sm font-medium opacity-90">{phase.milestone}</p>
-                        </div>
+                        )}
+                        {progressData.status === 'finished' && <span className="text-sm text-emerald-600 ml-2 font-medium">(Abgeschlossen!)</span>}
+                        {progressData.status === 'not_started' && (
+                          <div className="text-right flex flex-col items-end ml-2">
+                            <span className="text-sm text-slate-500">
+                              {progressData.daysLeftGross} Tage (~{(progressData.daysLeftGross / 30).toFixed(1).replace('.', ',')} Monate) bis Abgabe
+                            </span>
+                            <span className="text-xs font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border border-indigo-100 mt-0.5">
+                              {progressData.daysLeftNet} reine Arbeitstage gesamt
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
+                    <div className="h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                      <div className="h-full bg-indigo-500 transition-all duration-500 ease-out" style={{ width: `${progressData.percent}%` }} />
+                    </div>
+                  </div>
+                </header>
+
+                {/* Timeline */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                  <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <Target className="text-indigo-600 h-5 w-5" />
+                    Dein Zeitplan im Detail
+                  </h2>
+                  
+                  <div className="relative border-l-2 border-slate-100 ml-4 md:ml-6 space-y-8 pb-4">
+                    {phases.map((phase) => {
+                      const status = getPhaseStatus(phase);
+                      const isExpanded = expandedPhases.includes(phase.id);
+                      
+                      let dotColor = "bg-slate-200 border-slate-300";
+                      let cardStyle = "border-slate-200 bg-white opacity-70";
+                      let headerTextColor = "text-slate-600";
+                      let icon = <CircleDashed className="h-5 w-5 text-slate-400 bg-white" />;
+                      
+                      if (phase.type === 'vacation') {
+                        cardStyle = "border-amber-200 bg-amber-50/60";
+                        headerTextColor = "text-amber-800";
+                        icon = <span className="text-lg bg-amber-50 rounded-full h-6 w-6 flex items-center justify-center border border-amber-200 shadow-sm leading-none">🌴</span>;
+                        
+                        if (status === 'overdue' || status === 'completed_manual') {
+                          cardStyle = "border-slate-200 bg-slate-50/40 opacity-60";
+                          headerTextColor = "text-slate-500";
+                          icon = <CheckCircle2 className="h-5 w-5 text-slate-400 bg-slate-50 rounded-full" />;
+                        } else if (status === 'current') {
+                          cardStyle = "border-amber-300 bg-amber-100 shadow-md transform scale-[1.01] transition-transform";
+                          headerTextColor = "text-amber-900 font-bold";
+                          icon = (
+                            <div className="relative flex h-6 w-6">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-6 w-6 bg-amber-500 border-2 border-white"></span>
+                            </div>
+                          );
+                        }
+                      } else {
+                        if (status === 'completed_manual') {
+                          cardStyle = "border-emerald-200 bg-emerald-50/30";
+                          headerTextColor = "text-emerald-800";
+                          icon = <CheckCircle2 className="h-6 w-6 text-emerald-500 bg-white rounded-full" />;
+                        } else if (status === 'overdue') {
+                          cardStyle = "border-red-300 bg-red-50 shadow-sm";
+                          headerTextColor = "text-red-800";
+                          icon = <AlertCircle className="h-6 w-6 text-red-500 bg-white rounded-full" />;
+                        } else if (status === 'current') {
+                          cardStyle = "border-indigo-300 bg-indigo-50 shadow-md transform scale-[1.01] transition-transform";
+                          headerTextColor = "text-indigo-900 font-bold";
+                          icon = (
+                            <div className="relative flex h-6 w-6">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-6 w-6 bg-indigo-600 border-2 border-white"></span>
+                            </div>
+                          );
+                        }
+                      }
+
+                      return (
+                        <div key={phase.id} className="relative pl-8 md:pl-10">
+                          <div className="absolute -left-[13px] top-4 flex items-center justify-center">
+                            {icon}
+                          </div>
+
+                          <div className={`rounded-xl border p-5 transition-all duration-200 ${cardStyle}`}>
+                            <div 
+                              className="cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-2"
+                              onClick={() => togglePhase(phase.id)}
+                            >
+                              <div>
+                                <div className="flex items-center gap-3 mb-1">
+                                  <span className={`text-lg font-semibold ${headerTextColor}`}>
+                                    {phase.title}
+                                  </span>
+                                  {status === 'current' && <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-indigo-100 text-indigo-700`}>Aktuell</span>}
+                                  {status === 'overdue' && <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-red-100 text-red-700 flex items-center gap-1`}><AlertTriangle className="h-3 w-3"/> Überfällig</span>}
+                                  {status === 'completed_manual' && <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700`}>Erledigt</span>}
+                                </div>
+                                <div className="text-sm text-slate-500 flex items-center gap-2">
+                                  <Calendar className="h-3.5 w-3.5" />
+                                  {formatDate(phase.startDate)} – {formatDate(phase.endDate)} 
+                                  <span className="mx-1">•</span>
+                                  {phase.weeks}
+                                </div>
+                              </div>
+                              
+                              <button className="text-slate-400 hover:text-slate-600 self-start md:self-center p-1">
+                                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                              </button>
+                            </div>
+
+                            {isExpanded && (
+                              <div className="mt-5 pt-5 border-t border-slate-200/60 transition-all duration-300">
+                                <div>
+                                  <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 ${phase.type === 'vacation' ? 'text-amber-700' : 'text-slate-400'}`}>
+                                    <FileText className="h-3.5 w-3.5" /> {phase.type === 'vacation' ? 'Urlaubsplan' : 'Aufgaben in dieser Phase'}
+                                  </h4>
+                                  <p className={`text-sm p-3 rounded-lg border leading-relaxed ${phase.type === 'vacation' ? 'bg-amber-50/50 border-amber-100 text-amber-900' : 'bg-white/50 border-slate-100 text-slate-700'}`}>
+                                    {phase.tasks}
+                                  </p>
+                                </div>
+
+                                <div className={`mt-6 p-4 rounded-xl border ${phase.type === 'vacation' ? 'bg-amber-50/30 border-amber-100/60' : 'bg-slate-50 border-slate-200'}`}>
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                      <CheckSquare className={`h-4 w-4 ${phase.type === 'vacation' ? 'text-amber-600' : 'text-indigo-600'}`} />
+                                      <h4 className={`text-sm font-bold ${phase.type === 'vacation' ? 'text-amber-900' : 'text-slate-800'}`}>To-Do Liste</h4>
+                                    </div>
+                                    
+                                    {phase.type !== 'vacation' && (
+                                      <button 
+                                        onClick={() => togglePhaseCompletion(phase.id)}
+                                        className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 ${
+                                          status === 'completed_manual' 
+                                            ? 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200' 
+                                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                        }`}
+                                      >
+                                        {status === 'completed_manual' ? 'Abschluss rückgängig' : <><CheckCircle2 className="h-3.5 w-3.5" /> Phase abschließen</>}
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <div className="space-y-2 mb-3">
+                                    {(checklists[phase.id] || []).map(task => (
+                                      <div key={task.id} className="flex items-start gap-2 group">
+                                        <button
+                                          onClick={() => toggleTask(phase.id, task.id)}
+                                          className={`mt-0.5 shrink-0 h-4 w-4 rounded border flex items-center justify-center transition-colors ${
+                                            task.completed ? (phase.type === 'vacation' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-emerald-500 border-emerald-500 text-white') : 'bg-white border-slate-300'
+                                          }`}
+                                        >
+                                          {task.completed && <Check className="h-3 w-3" />}
+                                        </button>
+                                        <span className={`text-sm flex-1 ${task.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{task.text}</span>
+                                        <button onClick={() => deleteTask(phase.id, task.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="h-3.5 w-3.5" /></button>
+                                      </div>
+                                    ))}
+                                    {(!checklists[phase.id] || checklists[phase.id].length === 0) && <p className="text-xs text-slate-400 italic">Noch keine To-Dos hinterlegt.</p>}
+                                  </div>
+
+                                  <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200/60">
+                                    <input
+                                      type="text" placeholder="Neues To-Do..."
+                                      className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                      value={newTaskInput[phase.id] || ''}
+                                      onChange={(e) => setNewTaskInput(prev => ({ ...prev, [phase.id]: e.target.value }))}
+                                      onKeyDown={(e) => { if (e.key === 'Enter') addTask(phase.id); }}
+                                    />
+                                    <button onClick={() => addTask(phase.id)} className={`p-1.5 rounded-md transition-colors border ${phase.type === 'vacation' ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100' : 'bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100'}`}><Plus className="h-4 w-4" /></button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {phase.milestone && (
+                              <div className={`mt-4 p-4 rounded-lg flex gap-3 items-start border ${
+                                status === 'completed_manual' ? 'bg-emerald-100/50 border-emerald-200 text-emerald-800' :
+                                status === 'overdue' ? 'bg-white border-red-200 text-red-900 shadow-sm' :
+                                status === 'current' ? 'bg-white border-indigo-200 text-indigo-900 shadow-sm' :
+                                'bg-slate-50 border-slate-200 text-slate-600'
+                              }`}>
+                                <Flag className={`h-5 w-5 mt-0.5 shrink-0 ${
+                                  status === 'completed_manual' ? 'text-emerald-600' :
+                                  status === 'overdue' ? 'text-red-500' :
+                                  status === 'current' ? 'text-indigo-600' :
+                                  'text-slate-400'
+                                }`} />
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-bold text-sm">{phase.milestoneName}</span>
+                                    <span className="text-xs px-2 py-0.5 rounded bg-white/60 border border-slate-200 font-medium">{formatDate(phase.milestoneDate)}</span>
+                                  </div>
+                                  <p className="text-sm font-medium opacity-90">{phase.milestone}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-        
-        {/* Footer info */}
-        <p className="text-center text-sm text-slate-400">
-          Viel Erfolg bei deiner Masterarbeit! Bleib dran, du schaffst das. 🎓
-        </p>
+                
+                {/* Backup & Import Controls */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800">Datensicherung</h3>
+                    <p className="text-xs text-slate-500 mt-1">Sichere deine Checklisten lokal auf deinem Gerät.</p>
+                  </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <button onClick={handleExport} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                      <Download className="h-4 w-4" /> Backup speichern
+                    </button>
+                    <input type="file" accept=".json" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                    <button onClick={handleImportClick} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-slate-600 hover:bg-slate-50 border border-slate-300 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                      <Upload className="h-4 w-4" /> Backup laden
+                    </button>
+                  </div>
+                </div>
 
-      </div>
-    </div>
-  );
-}
+                <p className="text-center text-sm text-slate-400">
+                  Viel Erfolg bei deiner Masterarbeit! Bleib dran, du schaffst das. 🎓
+                </p>
+
+              </div>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
