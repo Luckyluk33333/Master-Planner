@@ -46,6 +46,7 @@
         const AlertTriangle = ({ className }) => <Icon className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Icon>;
         const Download = ({ className }) => <Icon className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
         const Upload = ({ className }) => <Icon className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></Icon>;
+        const Users = ({ className }) => <Icon className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
 
         // --- Daten ---
         const phases = [
@@ -99,7 +100,10 @@
             tasks: "Kapitel 3 (insg. 20%): Vorstellung der H. Butting GmbH & Co. KG und quantitative Analyse der Abfallbilanz (Scoping). Datensammlung im Unternehmen.",
             milestone: "Datenbasis gesichert vor dem Kurzurlaub.",
             milestoneDate: "2026-05-20",
-            milestoneName: "ZWISCHENZIEL"
+            milestoneName: "ZWISCHENZIEL",
+            meetings: [
+              { date: "2026-05-11", time: "14:30 – 15:00", title: "Feedback-Gespräch", desc: "Besprechung des aktuellen Stands mit dem Betreuer." }
+            ]
           },
           {
             id: 'v2', type: 'vacation',
@@ -129,7 +133,10 @@
             tasks: "Kapitel 4 (insg. 35%): Kern der Arbeit! Definition der Dimensionen (Ökonomie vs. Risiko), Operationalisierung der Kriterien, Entwicklung des Scoring-Modells und der Wert-Risiko-Matrix.",
             milestone: "Das theoretische Modell steht.",
             milestoneDate: "2026-06-30",
-            milestoneName: "ZWISCHENZIEL"
+            milestoneName: "ZWISCHENZIEL",
+            meetings: [
+              { date: "2026-06-15", time: "15:00 – 16:00", title: "Kolloquium", desc: "Zwischenpräsentation der Masterarbeit." }
+            ]
           },
           {
             id: 'p7', type: 'phase',
@@ -140,7 +147,10 @@
             tasks: "Kapitel 4.5 - 4.6: Anwendung des Modells auf die Abfallfraktionen der H. Butting GmbH und Proof of Concept (Exemplarische Maßnahmenplanung).",
             milestone: "Hauptteil (Kapitel 4) ist vor dem Urlaub fertig geschrieben.",
             milestoneDate: "2026-07-16",
-            milestoneName: "MEILENSTEIN 4"
+            milestoneName: "MEILENSTEIN 4",
+            meetings: [
+              { date: "2026-07-08", time: "14:30 – 15:00", title: "Feedback-Gespräch", desc: "Letztes Feedback vor der finalen Ausarbeitung." }
+            ]
           },
           {
             id: 'v3', type: 'vacation',
@@ -676,6 +686,28 @@
                                 </div>
                               </div>
                             )}
+
+                            {phase.meetings && phase.meetings.length > 0 && (
+                              <div className="mt-3 space-y-3">
+                                {phase.meetings.map((meeting, idx) => (
+                                  <div key={idx} className="p-4 rounded-lg border border-sky-200 bg-sky-50/70 flex items-start gap-3 shadow-sm">
+                                    <div className="bg-sky-100 p-2 rounded-full text-sky-700 shrink-0 mt-0.5">
+                                      <Users className="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                                        <span className="font-bold text-sm text-sky-900">{meeting.title}</span>
+                                        <span className="text-xs px-2 py-0.5 rounded-md bg-white border border-sky-200 text-sky-800 font-medium">
+                                          {formatDate(meeting.date)} • {meeting.time}
+                                        </span>
+                                      </div>
+                                      {meeting.desc && <p className="text-sm text-sky-800 opacity-90">{meeting.desc}</p>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
                           </div>
                         </div>
                       );
